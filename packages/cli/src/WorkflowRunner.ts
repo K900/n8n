@@ -63,13 +63,17 @@ export class WorkflowRunner {
 		this.push = Push.getInstance();
 		this.activeExecutions = ActiveExecutions.getInstance();
 
+		void this.init();
+		initErrorHandling();
+	}
+
+	private async init() {
 		const executionsMode = config.getEnv('executions.mode');
 
 		if (executionsMode === 'queue') {
-			this.jobQueue = Queue.getInstance().getBullObjectInstance();
+			const queue = await Queue.getInstance();
+			this.jobQueue = queue.getBullObjectInstance();
 		}
-
-		initErrorHandling();
 	}
 
 	/**
@@ -444,7 +448,8 @@ export class WorkflowRunner {
 			async (resolve, reject, onCancel) => {
 				onCancel.shouldReject = false;
 				onCancel(async () => {
-					await Queue.getInstance().stopJob(job);
+					const queue = await Queue.getInstance();
+					await queue.stopJob(job);
 
 					// We use "getWorkflowHooksWorkerExecuter" as "getWorkflowHooksWorkerMain" does not contain the
 					// "workflowExecuteAfter" which we require.
